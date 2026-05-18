@@ -1,0 +1,81 @@
+{
+  "name": "FTA - 01 Get Tasks",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "fta-tasks",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "webhookId": "fta-tasks"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1VofDYNBpmpw9XeClU6kVtSrchVcpWA-1DX5t6whfGgs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=2028815960",
+          "mode": "id"
+        },
+        "options": { "headerRow": 1 }
+      },
+      "name": "Read Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [460, 300],
+      "id": "a1b2c3d4-0001-0001-0001-000000000002",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIALS_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// The sheet has people in columns A/B and tasks in columns C/D.\n// They are INDEPENDENT lists — tasks are shared by all people.\n// We only read columns C and D here.\n\nconst COL_TASK          = 'Task List';      // Column C\nconst COL_REQUIRES_COUNT = 'Requires Count'; // Column D  (Yes / No)\n\nconst seen = new Set();\nconst tasks = [];\n\nfor (const item of items) {\n  const name = String(item.json[COL_TASK] ?? '').trim();\n  if (!name || seen.has(name)) continue;\n  seen.add(name);\n  tasks.push({\n    json: {\n      name,\n      requiresProgressCount:\n        String(item.json[COL_REQUIRES_COUNT] ?? '').toLowerCase().trim() === 'yes',\n    }\n  });\n}\n\nreturn tasks;\n"
+      },
+      "name": "Map Tasks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "id": "a1b2c3d4-0001-0001-0001-000000000003"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "id": "a1b2c3d4-0001-0001-0001-000000000004"
+    }
+  ],
+  "connections": {
+    "Webhook":    { "main": [[{ "node": "Read Sheet",  "type": "main", "index": 0 }]] },
+    "Read Sheet": { "main": [[{ "node": "Map Tasks",   "type": "main", "index": 0 }]] },
+    "Map Tasks":  { "main": [[{ "node": "Respond",     "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

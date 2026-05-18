@@ -1,0 +1,85 @@
+{
+  "name": "FTA - 02 Log Entry to Activity Log",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fta-log",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "id": "b2c3d4e5-0002-0002-0002-000000000001",
+      "webhookId": "fta-log"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = items[0].json;\n\n// Total Time Spent stored as integer minutes for easy aggregation in sheets\nreturn [{\n  json: {\n    'Date':              body.date ?? '',\n    'Person Name':       body.personName ?? '',\n    'Task':              body.taskName ?? '',\n    'Start Time':        body.startTime ?? '',\n    'End Time':          body.endTime ?? '',\n    'Total Time Spent':  body.durationMinutes ?? 0,\n    'Task Count':        body.taskCount != null ? body.taskCount : '',\n  }\n}];\n"
+      },
+      "name": "Prepare Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "id": "b2c3d4e5-0002-0002-0002-000000000002"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1VofDYNBpmpw9XeClU6kVtSrchVcpWA-1DX5t6whfGgs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Activity Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": { "cellFormat": "USER_ENTERED" }
+      },
+      "name": "Append to Activity Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [680, 300],
+      "id": "b2c3d4e5-0002-0002-0002-000000000003",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIALS_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": true }",
+        "options": {
+          "responseHeaders": {
+            "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }]
+          }
+        }
+      },
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "id": "b2c3d4e5-0002-0002-0002-000000000004"
+    }
+  ],
+  "connections": {
+    "Webhook":     { "main": [[{ "node": "Prepare Row",           "type": "main", "index": 0 }]] },
+    "Prepare Row": { "main": [[{ "node": "Append to Activity Log","type": "main", "index": 0 }]] },
+    "Append to Activity Log": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

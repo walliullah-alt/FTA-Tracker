@@ -1,0 +1,81 @@
+{
+  "name": "FTA - 04 Get Team Members",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "fta-members",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "id": "d4e5f6a7-0004-0004-0004-000000000001",
+      "webhookId": "fta-members"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1VofDYNBpmpw9XeClU6kVtSrchVcpWA-1DX5t6whfGgs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=2028815960",
+          "mode": "id"
+        },
+        "options": { "headerRow": 1 }
+      },
+      "name": "Read Source Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [460, 300],
+      "id": "d4e5f6a7-0004-0004-0004-000000000002",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIALS_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract unique names from Column A\nconst COL_NAME = 'Name'; // Column A header\n\nconst seen = new Set();\nconst members = [];\n\nfor (const item of items) {\n  const name = String(item.json[COL_NAME] ?? '').trim();\n  if (name && !seen.has(name)) {\n    seen.add(name);\n    members.push({ json: { name } });\n  }\n}\n\nreturn members;\n"
+      },
+      "name": "Deduplicate Names",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "id": "d4e5f6a7-0004-0004-0004-000000000003"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "id": "d4e5f6a7-0004-0004-0004-000000000004"
+    }
+  ],
+  "connections": {
+    "Webhook":          { "main": [[{ "node": "Read Source Sheet",   "type": "main", "index": 0 }]] },
+    "Read Source Sheet": { "main": [[{ "node": "Deduplicate Names",  "type": "main", "index": 0 }]] },
+    "Deduplicate Names": { "main": [[{ "node": "Respond",            "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

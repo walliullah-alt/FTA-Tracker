@@ -1,0 +1,81 @@
+{
+  "name": "FTA - 03 Get Entries (Dashboard)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "fta-entries",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "id": "c3d4e5f6-0003-0003-0003-000000000001",
+      "webhookId": "fta-entries"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1VofDYNBpmpw9XeClU6kVtSrchVcpWA-1DX5t6whfGgs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Activity Log",
+          "mode": "name"
+        },
+        "options": { "headerRow": 1 }
+      },
+      "name": "Read Activity Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [460, 300],
+      "id": "c3d4e5f6-0003-0003-0003-000000000002",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIALS_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $('Webhook').first().json.query ?? {};\nconst { personName, dateFrom, dateTo } = query;\n\n// Map sheet rows → TimeEntry objects\n// Column headers must exactly match: Date | Person Name | Task | Start Time | End Time | Total Time Spent | Task Count\nlet rows = items.map(item => ({\n  json: {\n    date:            String(item.json['Date'] ?? ''),\n    personName:      String(item.json['Person Name'] ?? ''),\n    taskName:        String(item.json['Task'] ?? ''),\n    startTime:       String(item.json['Start Time'] ?? ''),\n    endTime:         String(item.json['End Time'] ?? ''),\n    durationMinutes: Number(item.json['Total Time Spent'] ?? 0),\n    taskCount:       item.json['Task Count'] !== '' && item.json['Task Count'] != null\n                       ? Number(item.json['Task Count'])\n                       : null,\n  }\n})).filter(r => r.json.date !== '');\n\n// Apply query filters\nif (personName) rows = rows.filter(r => r.json.personName === personName);\nif (dateFrom)   rows = rows.filter(r => r.json.date >= dateFrom);\nif (dateTo)     rows = rows.filter(r => r.json.date <= dateTo);\n\n// Sort newest first\nrows.sort((a, b) => {\n  if (b.json.date !== a.json.date) return b.json.date.localeCompare(a.json.date);\n  return b.json.startTime.localeCompare(a.json.startTime);\n});\n\nreturn rows;\n"
+      },
+      "name": "Filter & Map Entries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "id": "c3d4e5f6-0003-0003-0003-000000000003"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "id": "c3d4e5f6-0003-0003-0003-000000000004"
+    }
+  ],
+  "connections": {
+    "Webhook":          { "main": [[{ "node": "Read Activity Log",      "type": "main", "index": 0 }]] },
+    "Read Activity Log": { "main": [[{ "node": "Filter & Map Entries",  "type": "main", "index": 0 }]] },
+    "Filter & Map Entries": { "main": [[{ "node": "Respond",            "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}
