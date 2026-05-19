@@ -20,20 +20,21 @@ interface Props {
   onCancel: () => void;
 }
 
-function toHHmm(iso: string) {
-  return format(new Date(iso), "HH:mm");
+function toHHmmss(iso: string) {
+  return format(new Date(iso), "HH:mm:ss");
 }
 
 function calcSeconds(start: string, end: string): number {
   if (!start || !end) return 0;
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-  return Math.max(0, eh * 3600 + em * 60 - (sh * 3600 + sm * 60));
+  const parts = (v: string) => v.split(":").map(Number);
+  const [sh, sm, ss = 0] = parts(start);
+  const [eh, em, es = 0] = parts(end);
+  return Math.max(0, eh * 3600 + em * 60 + es - (sh * 3600 + sm * 60 + ss));
 }
 
 export default function StopModal({ task, recordedStartISO, onConfirm, onCancel }: Props) {
-  const originalStart = useRef(toHHmm(recordedStartISO)).current;
-  const originalEnd = useRef(format(new Date(), "HH:mm")).current;
+  const originalStart = useRef(toHHmmss(recordedStartISO)).current;
+  const originalEnd = useRef(format(new Date(), "HH:mm:ss")).current;
 
   const [startTime, setStartTime] = useState(originalStart);
   const [endTime, setEndTime] = useState(originalEnd);
@@ -44,8 +45,8 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
 
   function handleSave() {
     onConfirm({
-      startTime: startTime + ":00",
-      endTime: endTime + ":00",
+      startTime: startTime,
+      endTime: endTime,
       durationSeconds,
       taskCount: count ? Number(count) : undefined,
       entryType: isModified ? "corrected" : "auto",
@@ -74,6 +75,7 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
+              step="1"
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
@@ -85,6 +87,7 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
+              step="1"
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
@@ -119,6 +122,7 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
               value={count}
               onChange={(e) => setCount(e.target.value)}
               placeholder="Required — e.g. 12"
+              step="1"
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
