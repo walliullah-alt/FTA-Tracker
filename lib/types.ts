@@ -15,6 +15,7 @@ export interface TimeEntry {
   endTime: string;          // HH:MM:SS   → col E
   durationSeconds: number;  // col F (stored as integer seconds for accuracy)
   taskCount: number | null; // col G (null when not applicable)
+  entryType: "auto" | "manual" | "corrected"; // col H
 }
 
 export interface ActiveTask {

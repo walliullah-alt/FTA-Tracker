@@ -7,7 +7,7 @@ export default function DashboardPage() {
       <Navbar />
       <main className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-slate-900 mb-6">
-          FTA Dashboard
+          FTE Dashboard
         </h1>
         <DashboardClientWrapper />
       </main>

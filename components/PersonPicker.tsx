@@ -20,9 +20,9 @@ export default function PersonPicker({ members, onSelect, error }: Props) {
             <Clock className="w-9 h-9 text-blue-600" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">FTA Tracker</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-1">FTE Tracker</h1>
         <p className="text-slate-500 text-sm mb-7">
-          Full Time Allocation — Operations
+          Full Time Employee — Operations
         </p>
 
         <div className="flex items-center gap-2 text-slate-600 text-sm font-medium mb-2">

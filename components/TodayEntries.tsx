@@ -28,9 +28,21 @@ export default function TodayEntries({ entries }: { entries: TimeEntry[] }) {
           className="flex items-center gap-3 bg-white rounded-xl border border-slate-100 px-4 py-3 shadow-sm"
         >
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-slate-800 text-sm truncate">
-              {entry.taskName}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-slate-800 text-sm truncate">
+                {entry.taskName}
+              </p>
+              {entry.entryType === "manual" && (
+                <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                  Manual
+                </span>
+              )}
+              {entry.entryType === "corrected" && (
+                <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
+                  Corrected
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-400 mt-0.5">
               {entry.startTime} → {entry.endTime}
             </p>

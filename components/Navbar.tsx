@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, BarChart2, LogOut } from "lucide-react";
+import { Clock, BarChart2, LogOut, PenLine } from "lucide-react";
 import clsx from "clsx";
 import { usePerson } from "@/contexts/PersonContext";
 
@@ -24,7 +24,7 @@ export default function Navbar() {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 font-bold text-blue-600 text-lg">
             <Clock className="w-5 h-5" />
-            <span>FTA Tracker</span>
+            <span>FTE Tracker</span>
           </div>
           <div className="flex gap-1">
             <Link
@@ -50,6 +50,18 @@ export default function Navbar() {
             >
               <BarChart2 className="w-4 h-4" />
               Dashboard
+            </Link>
+            <Link
+              href="/manual"
+              className={clsx(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                pathname === "/manual"
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-slate-600 hover:bg-slate-100"
+              )}
+            >
+              <PenLine className="w-4 h-4" />
+              Manual Entry
             </Link>
           </div>
         </div>

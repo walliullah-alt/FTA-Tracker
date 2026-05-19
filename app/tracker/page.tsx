@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Play, Square, RefreshCw, AlertCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PersonPicker from "@/components/PersonPicker";
-import ProgressModal from "@/components/ProgressModal";
+import StopModal, { type StopData } from "@/components/StopModal";
 import TodayEntries from "@/components/TodayEntries";
 import { fetchTasks, fetchMembers, logEntry, fetchEntries } from "@/lib/n8n";
 import { usePerson } from "@/contexts/PersonContext";
@@ -32,10 +32,6 @@ export default function TrackerPage() {
   const [elapsed, setElapsed] = useState(0);
   const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [pendingStop, setPendingStop] = useState<{
-    endTime: string;
-    durationSeconds: number;
-  } | null>(null);
   const [booting, setBooting] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [membersError, setMembersError] = useState<string | null>(null);
@@ -111,55 +107,33 @@ export default function TrackerPage() {
 
   function handleStop() {
     if (!activeTask) return;
-    const stop = {
-      endTime: format(new Date(), "HH:mm:ss"),
-      durationSeconds: elapsed, // exact seconds — no rounding, no minimum
-    };
-    setPendingStop(stop);
-
-    if (activeTask.task.requiresProgressCount) {
-      // Show modal so user can enter their count
-      setShowModal(true);
-    } else {
-      // No count needed — save immediately, no popup
-      saveEntry(stop, undefined);
-    }
+    setShowModal(true);
   }
 
-  function saveEntry(
-    stop: { endTime: string; durationSeconds: number },
-    taskCount: number | undefined
-  ) {
+  function handleConfirm(data: StopData) {
     if (!activeTask || !personName) return;
 
     const entry = {
       date: today,
       personName,
       taskName: activeTask.task.name,
-      startTime: format(new Date(activeTask.startTime), "HH:mm:ss"),
-      endTime: stop.endTime,
-      durationSeconds: stop.durationSeconds,
-      taskCount: taskCount ?? null,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      durationSeconds: data.durationSeconds,
+      taskCount: data.taskCount ?? null,
+      entryType: data.entryType,
     };
 
-    // Update UI immediately — don't wait for the network
+    setShowModal(false);
     localStorage.removeItem(STORAGE_KEY);
     setActiveTask(null);
     setElapsed(0);
-    setPendingStop(null);
     setTodayEntries((prev) => [entry, ...prev]);
     setError(null);
 
-    // Fire-and-forget save to Google Sheet in background
     logEntry(entry).catch(() =>
       setError("Entry shown locally but failed to sync to sheet. Refresh to check.")
     );
-  }
-
-  function handleConfirm(taskCount?: number) {
-    if (!pendingStop) return;
-    setShowModal(false);
-    saveEntry(pendingStop, taskCount);
   }
 
   if (booting) {
@@ -268,10 +242,10 @@ export default function TrackerPage() {
         </div>
       </main>
 
-      {showModal && activeTask && pendingStop && (
-        <ProgressModal
+      {showModal && activeTask && (
+        <StopModal
           task={activeTask.task}
-          durationSeconds={pendingStop.durationSeconds}
+          recordedStartISO={activeTask.startTime}
           onConfirm={handleConfirm}
           onCancel={() => setShowModal(false)}
         />

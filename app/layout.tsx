@@ -6,8 +6,8 @@ import Providers from "@/components/Providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FTA Tracker",
-  description: "Full Time Allocation Tracker for operations teams",
+  title: "FTE Tracker",
+  description: "Full Time Employee Tracker for operations teams",
 };
 
 export default function RootLayout({
