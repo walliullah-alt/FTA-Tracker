@@ -111,13 +111,14 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
           <div className="mb-4">
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               How many did you process / complete?
+              <span className="text-red-500 ml-1">*</span>
             </label>
             <input
               type="number"
               min={0}
               value={count}
               onChange={(e) => setCount(e.target.value)}
-              placeholder="e.g. 12"
+              placeholder="Required — e.g. 12"
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
@@ -132,7 +133,7 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
           </button>
           <button
             onClick={handleSave}
-            disabled={durationSeconds <= 0}
+            disabled={durationSeconds <= 0 || (task.requiresProgressCount && count === "")}
             className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold text-sm flex items-center justify-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
