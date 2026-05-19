@@ -4,6 +4,7 @@ import type { TimeEntry } from "@/lib/types";
 import { Clock, Hash } from "lucide-react";
 
 export default function TodayEntries({ entries }: { entries: TimeEntry[] }) {
+  entries = entries.filter((e) => e.entryType !== "count_update");
   if (entries.length === 0) {
     return (
       <p className="text-center text-slate-400 py-6 text-sm">
