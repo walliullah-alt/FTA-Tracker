@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = items[0].json;\n\n// Total Time Spent stored as integer minutes for easy aggregation in sheets\nreturn [{\n  json: {\n    'Date':              body.date ?? '',\n    'Person Name':       body.personName ?? '',\n    'Task':              body.taskName ?? '',\n    'Start Time':        body.startTime ?? '',\n    'End Time':          body.endTime ?? '',\n    'Total Time Spent':  body.durationSeconds ?? 0,  // stored as integer seconds\n    'Task Count':        body.taskCount != null ? body.taskCount : '',\n  }\n}];\n"
+        "jsCode": "const body = items[0].json.body ?? items[0].json;\n\nreturn [{\n  json: {\n    'Date':              body.date ?? '',\n    'Person Name':       body.personName ?? '',\n    'Task':              body.taskName ?? '',\n    'Start Time':        body.startTime ?? '',\n    'End Time':          body.endTime ?? '',\n    'Total Time Spent':  body.durationSeconds ?? 0,\n    'Task Count':        body.taskCount != null ? body.taskCount : '',\n  }\n}];\n"
       },
       "name": "Prepare Row",
       "type": "n8n-nodes-base.code",

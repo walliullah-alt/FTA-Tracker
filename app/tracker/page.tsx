@@ -37,7 +37,6 @@ export default function TrackerPage() {
     durationSeconds: number;
   } | null>(null);
   const [booting, setBooting] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [membersError, setMembersError] = useState<string | null>(null);
 
@@ -127,38 +126,40 @@ export default function TrackerPage() {
     }
   }
 
-  async function saveEntry(
+  function saveEntry(
     stop: { endTime: string; durationSeconds: number },
     taskCount: number | undefined
   ) {
     if (!activeTask || !personName) return;
-    setSaving(true);
-    try {
-      await logEntry({
-        date: today,
-        personName,
-        taskName: activeTask.task.name,
-        startTime: format(new Date(activeTask.startTime), "HH:mm:ss"),
-        endTime: stop.endTime,
-        durationSeconds: stop.durationSeconds,
-        taskCount: taskCount ?? null,
-      });
-      localStorage.removeItem(STORAGE_KEY);
-      setActiveTask(null);
-      setElapsed(0);
-      setPendingStop(null);
-      await loadTodayEntries(personName);
-    } catch {
-      setError("Failed to save entry. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+
+    const entry = {
+      date: today,
+      personName,
+      taskName: activeTask.task.name,
+      startTime: format(new Date(activeTask.startTime), "HH:mm:ss"),
+      endTime: stop.endTime,
+      durationSeconds: stop.durationSeconds,
+      taskCount: taskCount ?? null,
+    };
+
+    // Update UI immediately — don't wait for the network
+    localStorage.removeItem(STORAGE_KEY);
+    setActiveTask(null);
+    setElapsed(0);
+    setPendingStop(null);
+    setTodayEntries((prev) => [entry, ...prev]);
+    setError(null);
+
+    // Fire-and-forget save to Google Sheet in background
+    logEntry(entry).catch(() =>
+      setError("Entry shown locally but failed to sync to sheet. Refresh to check.")
+    );
   }
 
-  async function handleConfirm(taskCount?: number) {
+  function handleConfirm(taskCount?: number) {
     if (!pendingStop) return;
     setShowModal(false);
-    await saveEntry(pendingStop, taskCount);
+    saveEntry(pendingStop, taskCount);
   }
 
   if (booting) {
@@ -208,11 +209,10 @@ export default function TrackerPage() {
             <div className="flex gap-3 items-center">
               <button
                 onClick={handleStop}
-                disabled={saving}
-                className="flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-2.5 rounded-xl transition-colors"
               >
                 <Square className="w-4 h-4 fill-blue-600" />
-                {saving ? "Saving…" : "Stop"}
+                Stop
               </button>
             </div>
           </div>
