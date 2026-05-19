@@ -1,12 +1,7 @@
 "use client";
+import { fmtDuration } from "@/lib/utils";
 import type { TimeEntry } from "@/lib/types";
 import { Clock, Hash } from "lucide-react";
-
-function fmtMin(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m} min`;
-}
 
 export default function TodayEntries({ entries }: { entries: TimeEntry[] }) {
   if (entries.length === 0) {
@@ -17,14 +12,14 @@ export default function TodayEntries({ entries }: { entries: TimeEntry[] }) {
     );
   }
 
-  const totalMinutes = entries.reduce((s, e) => s + e.durationMinutes, 0);
+  const totalSeconds = entries.reduce((s, e) => s + e.durationSeconds, 0);
 
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center text-xs text-slate-500 px-1 mb-3">
         <span>{entries.length} entries</span>
         <span className="font-medium text-slate-700">
-          Total: {fmtMin(totalMinutes)}
+          Total: {fmtDuration(totalSeconds)}
         </span>
       </div>
       {entries.map((entry, i) => (
@@ -49,7 +44,7 @@ export default function TodayEntries({ entries }: { entries: TimeEntry[] }) {
             )}
             <span className="flex items-center gap-1 text-xs text-slate-600 font-semibold">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              {fmtMin(entry.durationMinutes)}
+              {fmtDuration(entry.durationSeconds)}
             </span>
           </div>
         </div>

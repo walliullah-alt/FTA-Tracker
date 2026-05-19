@@ -3,15 +3,10 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { format, differenceInCalendarDays } from "date-fns";
 import { RefreshCw, ChevronRight } from "lucide-react";
 import { fetchEntries, fetchMembers } from "@/lib/n8n";
+import { fmtDuration } from "@/lib/utils";
 import { usePerson } from "@/contexts/PersonContext";
 import TaskBreakdownModal from "@/components/TaskBreakdownModal";
 import type { TimeEntry, TeamMember, PersonSummary } from "@/lib/types";
-
-function fmtMin(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
 
 function fmtDate(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", {
@@ -46,13 +41,13 @@ export default function DashboardView() {
         personName: personFilter !== "all" ? personFilter : undefined,
       });
       setEntries(data);
-    } catch { /* show empty */ }
-    finally { setLoading(false); }
+    } catch { /* show empty */ } finally {
+      setLoading(false);
+    }
   }, [dateFrom, dateTo, personFilter]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Is this a single day or a date range?
   const isRange = dateFrom !== dateTo;
   const dayCount = Math.max(
     1,
@@ -62,35 +57,34 @@ export default function DashboardView() {
     ) + 1
   );
 
-  // Aggregate entries into per-person summaries
   const summaries: PersonSummary[] = useMemo(() => {
     const byPerson: Record<string, {
-      totalMinutes: number;
-      tasks: Record<string, { minutes: number; count: number }>;
+      totalSeconds: number;
+      tasks: Record<string, { seconds: number; count: number }>;
     }> = {};
 
     for (const e of entries) {
       if (!byPerson[e.personName]) {
-        byPerson[e.personName] = { totalMinutes: 0, tasks: {} };
+        byPerson[e.personName] = { totalSeconds: 0, tasks: {} };
       }
-      byPerson[e.personName].totalMinutes += e.durationMinutes;
+      byPerson[e.personName].totalSeconds += e.durationSeconds;
       if (!byPerson[e.personName].tasks[e.taskName]) {
-        byPerson[e.personName].tasks[e.taskName] = { minutes: 0, count: 0 };
+        byPerson[e.personName].tasks[e.taskName] = { seconds: 0, count: 0 };
       }
-      byPerson[e.personName].tasks[e.taskName].minutes += e.durationMinutes;
+      byPerson[e.personName].tasks[e.taskName].seconds += e.durationSeconds;
       byPerson[e.personName].tasks[e.taskName].count += e.taskCount ?? 0;
     }
 
     return Object.entries(byPerson)
-      .sort((a, b) => b[1].totalMinutes - a[1].totalMinutes)
+      .sort((a, b) => b[1].totalSeconds - a[1].totalSeconds)
       .map(([name, data]) => ({
         personName: name,
-        totalMinutes: data.totalMinutes,
-        avgDailyMinutes: data.totalMinutes / dayCount,
-        tasks: Object.entries(data.tasks).map(([taskName, { minutes, count }]) => ({
+        totalSeconds: data.totalSeconds,
+        avgDailySeconds: Math.round(data.totalSeconds / dayCount),
+        tasks: Object.entries(data.tasks).map(([taskName, { seconds, count }]) => ({
           taskName,
-          totalMinutes: minutes,
-          avgDailyMinutes: minutes / dayCount,
+          totalSeconds: seconds,
+          avgDailySeconds: Math.round(seconds / dayCount),
           totalCount: count,
         })),
       }));
@@ -106,7 +100,9 @@ export default function DashboardView() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
         <div className="flex flex-wrap gap-3 items-end">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Date From</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">
+              Date From
+            </label>
             <input
               type="date"
               value={dateFrom}
@@ -116,7 +112,9 @@ export default function DashboardView() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Date To</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">
+              Date To
+            </label>
             <input
               type="date"
               value={dateTo}
@@ -126,18 +124,24 @@ export default function DashboardView() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Employee</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">
+              Employee
+            </label>
             <select
               value={personFilter}
               onChange={(e) => setPersonFilter(e.target.value)}
               className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
               <option value="all">All employees</option>
-              {personName && <option value={personName}>Me only</option>}
+              {personName && (
+                <option value={personName}>Me only</option>
+              )}
               {members
                 .filter((m) => m.name !== personName)
                 .map((m) => (
-                  <option key={m.name} value={m.name}>{m.name}</option>
+                  <option key={m.name} value={m.name}>
+                    {m.name}
+                  </option>
                 ))}
             </select>
           </div>
@@ -146,7 +150,9 @@ export default function DashboardView() {
             disabled={loading}
             className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors disabled:opacity-60"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+            />
             Apply
           </button>
         </div>
@@ -155,7 +161,6 @@ export default function DashboardView() {
       {/* Summary table */}
       {summaries.length > 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Table header */}
           <div className="px-5 py-4 border-b border-slate-100">
             <div className="flex items-baseline justify-between">
               <h3 className="font-semibold text-slate-800">
@@ -164,7 +169,9 @@ export default function DashboardView() {
                   : fmtDate(dateFrom)}
               </h3>
               {isRange && (
-                <span className="text-xs text-slate-400">{dayCount} days · averages shown</span>
+                <span className="text-xs text-slate-400">
+                  {dayCount} days · averages shown
+                </span>
               )}
             </div>
           </div>
@@ -196,18 +203,20 @@ export default function DashboardView() {
                           .join("")
                           .toUpperCase()}
                       </div>
-                      <span className="font-medium text-slate-800">{s.personName}</span>
+                      <span className="font-medium text-slate-800">
+                        {s.personName}
+                      </span>
                     </div>
                   </td>
                   <td className="px-5 py-4 text-right">
                     <span className="text-lg font-bold text-blue-600 group-hover:text-blue-700">
-                      {isRange
-                        ? fmtMin(s.avgDailyMinutes)
-                        : fmtMin(s.totalMinutes)}
+                      {fmtDuration(
+                        isRange ? s.avgDailySeconds : s.totalSeconds
+                      )}
                     </span>
                     {isRange && (
                       <p className="text-xs text-slate-400">
-                        total {fmtMin(s.totalMinutes)}
+                        total {fmtDuration(s.totalSeconds)}
                       </p>
                     )}
                   </td>
@@ -233,7 +242,6 @@ export default function DashboardView() {
         </div>
       )}
 
-      {/* Drill-down popup */}
       {popupSummary && (
         <TaskBreakdownModal
           summary={popupSummary}

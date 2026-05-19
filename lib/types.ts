@@ -8,12 +8,12 @@ export interface TeamMember {
 }
 
 export interface TimeEntry {
-  date: string;            // YYYY-MM-DD  → col A
-  personName: string;      // col B
-  taskName: string;        // col C
-  startTime: string;       // HH:MM:SS   → col D
-  endTime: string;         // HH:MM:SS   → col E
-  durationMinutes: number; // col F (stored as integer minutes)
+  date: string;             // YYYY-MM-DD  → col A
+  personName: string;       // col B
+  taskName: string;         // col C
+  startTime: string;        // HH:MM:SS   → col D
+  endTime: string;          // HH:MM:SS   → col E
+  durationSeconds: number;  // col F (stored as integer seconds for accuracy)
   taskCount: number | null; // col G (null when not applicable)
 }
 
@@ -28,17 +28,16 @@ export interface DashboardFilters {
   dateTo?: string;
 }
 
-// Aggregated row for the dashboard summary table
 export interface PersonSummary {
   personName: string;
-  totalMinutes: number;
-  avgDailyMinutes: number;
+  totalSeconds: number;
+  avgDailySeconds: number;
   tasks: TaskBreakdown[];
 }
 
 export interface TaskBreakdown {
   taskName: string;
-  totalMinutes: number;
-  avgDailyMinutes: number;
+  totalSeconds: number;
+  avgDailySeconds: number;
   totalCount: number;
 }

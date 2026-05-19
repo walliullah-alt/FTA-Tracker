@@ -34,7 +34,7 @@ export default function TrackerPage() {
   const [showModal, setShowModal] = useState(false);
   const [pendingStop, setPendingStop] = useState<{
     endTime: string;
-    durationMinutes: number;
+    durationSeconds: number;
   } | null>(null);
   const [booting, setBooting] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,14 +46,18 @@ export default function TrackerPage() {
   const loadTodayEntries = useCallback(
     async (name: string) => {
       try {
-        const data = await fetchEntries({ personName: name, dateFrom: today, dateTo: today });
+        const data = await fetchEntries({
+          personName: name,
+          dateFrom: today,
+          dateTo: today,
+        });
         setTodayEntries(data);
       } catch { /* non-fatal */ }
     },
     [today]
   );
 
-  // Boot: fetch members + tasks together (tasks are shared by all, not person-specific)
+  // Boot: load members + tasks together (tasks are shared by everyone)
   useEffect(() => {
     async function boot() {
       try {
@@ -61,18 +65,23 @@ export default function TrackerPage() {
         setMembers(m);
         setTasks(t);
       } catch {
-        setMembersError("Could not load data. Check n8n webhooks fta-members and fta-tasks are active.");
+        setMembersError(
+          "Could not load data. Check n8n webhooks fta-members and fta-tasks are active."
+        );
       }
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        try { setActiveTask(JSON.parse(stored)); } catch { localStorage.removeItem(STORAGE_KEY); }
+        try {
+          setActiveTask(JSON.parse(stored));
+        } catch {
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
       setBooting(false);
     }
     boot();
   }, []);
 
-  // When person is selected, load their today's entries
   useEffect(() => {
     if (personName) loadTodayEntries(personName);
   }, [personName, loadTodayEntries]);
@@ -81,7 +90,11 @@ export default function TrackerPage() {
   useEffect(() => {
     if (!activeTask) return;
     const tick = () =>
-      setElapsed(Math.floor((Date.now() - new Date(activeTask.startTime).getTime()) / 1000));
+      setElapsed(
+        Math.floor(
+          (Date.now() - new Date(activeTask.startTime).getTime()) / 1000
+        )
+      );
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
@@ -99,25 +112,35 @@ export default function TrackerPage() {
 
   function handleStop() {
     if (!activeTask) return;
-    setPendingStop({
+    const stop = {
       endTime: format(new Date(), "HH:mm:ss"),
-      durationMinutes: Math.max(1, Math.round(elapsed / 60)),
-    });
-    setShowModal(true);
+      durationSeconds: elapsed, // exact seconds — no rounding, no minimum
+    };
+    setPendingStop(stop);
+
+    if (activeTask.task.requiresProgressCount) {
+      // Show modal so user can enter their count
+      setShowModal(true);
+    } else {
+      // No count needed — save immediately, no popup
+      saveEntry(stop, undefined);
+    }
   }
 
-  async function handleConfirm(taskCount?: number) {
-    if (!activeTask || !pendingStop || !personName) return;
+  async function saveEntry(
+    stop: { endTime: string; durationSeconds: number },
+    taskCount: number | undefined
+  ) {
+    if (!activeTask || !personName) return;
     setSaving(true);
-    setShowModal(false);
     try {
       await logEntry({
         date: today,
         personName,
         taskName: activeTask.task.name,
         startTime: format(new Date(activeTask.startTime), "HH:mm:ss"),
-        endTime: pendingStop.endTime,
-        durationMinutes: pendingStop.durationMinutes,
+        endTime: stop.endTime,
+        durationSeconds: stop.durationSeconds,
         taskCount: taskCount ?? null,
       });
       localStorage.removeItem(STORAGE_KEY);
@@ -132,6 +155,12 @@ export default function TrackerPage() {
     }
   }
 
+  async function handleConfirm(taskCount?: number) {
+    if (!pendingStop) return;
+    setShowModal(false);
+    await saveEntry(pendingStop, taskCount);
+  }
+
   if (booting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -142,7 +171,11 @@ export default function TrackerPage() {
 
   if (!personName) {
     return (
-      <PersonPicker members={members} onSelect={setPersonName} error={membersError} />
+      <PersonPicker
+        members={members}
+        onSelect={setPersonName}
+        error={membersError}
+      />
     );
   }
 
@@ -154,10 +187,15 @@ export default function TrackerPage() {
           <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-600 text-xs underline"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
-        {/* Active task card */}
         {activeTask ? (
           <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl mb-6">
             <p className="text-blue-200 text-xs font-semibold uppercase tracking-wider mb-1">
@@ -174,14 +212,15 @@ export default function TrackerPage() {
                 className="flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-2.5 rounded-xl transition-colors disabled:opacity-50"
               >
                 <Square className="w-4 h-4 fill-blue-600" />
-                Stop
+                {saving ? "Saving…" : "Stop"}
               </button>
-              {saving && <span className="text-blue-200 text-sm">Saving…</span>}
             </div>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
-            <h2 className="font-semibold text-slate-800 mb-4">Start a new task</h2>
+            <h2 className="font-semibold text-slate-800 mb-4">
+              Start a new task
+            </h2>
             {tasks.length === 0 ? (
               <div className="flex items-center gap-2 text-slate-400 text-sm">
                 <RefreshCw className="w-4 h-4 animate-spin" /> Loading tasks…
@@ -213,10 +252,11 @@ export default function TrackerPage() {
           </div>
         )}
 
-        {/* Today's entries */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-slate-800">Today&apos;s Entries</h2>
+            <h2 className="font-semibold text-slate-800">
+              Today&apos;s Entries
+            </h2>
             <button
               onClick={() => loadTodayEntries(personName)}
               className="text-slate-400 hover:text-slate-600"
@@ -231,7 +271,7 @@ export default function TrackerPage() {
       {showModal && activeTask && pendingStop && (
         <ProgressModal
           task={activeTask.task}
-          durationMinutes={pendingStop.durationMinutes}
+          durationSeconds={pendingStop.durationSeconds}
           onConfirm={handleConfirm}
           onCancel={() => setShowModal(false)}
         />

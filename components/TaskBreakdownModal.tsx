@@ -1,5 +1,6 @@
 "use client";
 import { X } from "lucide-react";
+import { fmtDuration } from "@/lib/utils";
 import type { PersonSummary } from "@/lib/types";
 
 interface Props {
@@ -9,12 +10,6 @@ interface Props {
   dateTo: string;
   dayCount: number;
   onClose: () => void;
-}
-
-function fmtMin(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 function fmtDate(iso: string) {
@@ -33,44 +28,48 @@ export default function TaskBreakdownModal({
   dayCount,
   onClose,
 }: Props) {
-  const totalDisplay = isRange
-    ? fmtMin(summary.avgDailyMinutes)
-    : fmtMin(summary.totalMinutes);
+  const displaySeconds = isRange
+    ? summary.avgDailySeconds
+    : summary.totalSeconds;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-        {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-slate-100">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">{summary.personName}</h2>
+            <h2 className="text-lg font-bold text-slate-900">
+              {summary.personName}
+            </h2>
             <p className="text-sm text-slate-500 mt-0.5">
               {isRange
                 ? `${fmtDate(dateFrom)} – ${fmtDate(dateTo)} (${dayCount} day${dayCount !== 1 ? "s" : ""})`
                 : fmtDate(dateFrom)}
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 mt-0.5">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 mt-0.5"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Summary pill */}
         <div className="px-6 py-4 bg-blue-50">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-blue-600">{totalDisplay}</span>
+            <span className="text-3xl font-bold text-blue-600">
+              {fmtDuration(displaySeconds)}
+            </span>
             <span className="text-sm text-blue-500">
               {isRange ? "average per day" : "total time logged"}
             </span>
           </div>
           {isRange && (
             <p className="text-xs text-blue-400 mt-0.5">
-              Total across period: {fmtMin(summary.totalMinutes)}
+              Total across period: {fmtDuration(summary.totalSeconds)}
             </p>
           )}
         </div>
 
-        {/* Task breakdown table */}
         <div className="p-6">
           <table className="w-full text-sm">
             <thead>
@@ -86,12 +85,16 @@ export default function TaskBreakdownModal({
             </thead>
             <tbody>
               {summary.tasks
-                .sort((a, b) => b.totalMinutes - a.totalMinutes)
+                .sort((a, b) => b.totalSeconds - a.totalSeconds)
                 .map((t) => (
                   <tr key={t.taskName} className="border-b border-slate-50">
-                    <td className="py-2.5 text-slate-800 font-medium">{t.taskName}</td>
+                    <td className="py-2.5 text-slate-800 font-medium">
+                      {t.taskName}
+                    </td>
                     <td className="py-2.5 text-right text-slate-700 font-semibold">
-                      {isRange ? fmtMin(t.avgDailyMinutes) : fmtMin(t.totalMinutes)}
+                      {fmtDuration(
+                        isRange ? t.avgDailySeconds : t.totalSeconds
+                      )}
                     </td>
                     <td className="py-2.5 text-right text-slate-500">
                       {t.totalCount > 0 ? t.totalCount : "—"}
@@ -105,7 +108,7 @@ export default function TaskBreakdownModal({
                   {isRange ? "Avg Total / Day" : "Total"}
                 </td>
                 <td className="pt-3 text-right font-bold text-blue-600">
-                  {totalDisplay}
+                  {fmtDuration(displaySeconds)}
                 </td>
                 <td className="pt-3 text-right font-bold text-slate-600">
                   {summary.tasks.reduce((s, t) => s + t.totalCount, 0) || "—"}

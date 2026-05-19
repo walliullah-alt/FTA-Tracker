@@ -1,24 +1,19 @@
 "use client";
 import { useState } from "react";
 import { X, CheckCircle2 } from "lucide-react";
+import { fmtDuration } from "@/lib/utils";
 import type { Task } from "@/lib/types";
 
 interface Props {
   task: Task;
-  durationMinutes: number;
+  durationSeconds: number;
   onConfirm: (taskCount?: number) => void;
   onCancel: () => void;
 }
 
-function fmtMin(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m} min`;
-}
-
 export default function ProgressModal({
   task,
-  durationMinutes,
+  durationSeconds,
   onConfirm,
   onCancel,
 }: Props) {
@@ -38,25 +33,25 @@ export default function ProgressModal({
         </div>
 
         <div className="bg-slate-50 rounded-xl p-4 mb-5 text-center">
-          <p className="text-3xl font-bold text-blue-600">{fmtMin(durationMinutes)}</p>
+          <p className="text-3xl font-bold text-blue-600">
+            {fmtDuration(durationSeconds)}
+          </p>
           <p className="text-sm text-slate-500 mt-1">time logged</p>
         </div>
 
-        {task.requiresProgressCount && (
-          <div className="mb-5">
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              How many did you process / complete?
-            </label>
-            <input
-              type="number"
-              min={0}
-              value={count}
-              onChange={(e) => setCount(e.target.value)}
-              placeholder="e.g. 12"
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-        )}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            How many did you process / complete?
+          </label>
+          <input
+            type="number"
+            min={0}
+            value={count}
+            onChange={(e) => setCount(e.target.value)}
+            placeholder="e.g. 12"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
 
         <div className="flex gap-3">
           <button
@@ -66,11 +61,7 @@ export default function ProgressModal({
             Cancel
           </button>
           <button
-            onClick={() =>
-              onConfirm(
-                task.requiresProgressCount && count ? Number(count) : undefined
-              )
-            }
+            onClick={() => onConfirm(count ? Number(count) : undefined)}
             className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
