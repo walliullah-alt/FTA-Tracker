@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { format } from "date-fns";
-import { Play, Square, RefreshCw, AlertCircle } from "lucide-react";
+import { Play, Square, RefreshCw, AlertCircle, ClipboardList } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PersonPicker from "@/components/PersonPicker";
 import StopModal, { type StopData } from "@/components/StopModal";
+import DailyCountModal from "@/components/DailyCountModal";
 import TodayEntries from "@/components/TodayEntries";
 import { fetchTasks, fetchMembers, logEntry, fetchEntries } from "@/lib/n8n";
 import { usePerson } from "@/contexts/PersonContext";
@@ -32,6 +33,7 @@ export default function TrackerPage() {
   const [elapsed, setElapsed] = useState(0);
   const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showDailyCount, setShowDailyCount] = useState(false);
   const [booting, setBooting] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [membersError, setMembersError] = useState<string | null>(null);
@@ -120,7 +122,7 @@ export default function TrackerPage() {
       startTime: data.startTime,
       endTime: data.endTime,
       durationSeconds: data.durationSeconds,
-      taskCount: data.taskCount ?? null,
+      taskCount: null,
       entryType: data.entryType,
     };
 
@@ -226,6 +228,22 @@ export default function TrackerPage() {
           </div>
         )}
 
+        {!activeTask && todayEntries.some((e) => e.entryType !== "count_update") && (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4 mb-6 flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-slate-800 text-sm">End-of-Day Counts</p>
+              <p className="text-xs text-slate-400 mt-0.5">Submit your totals for today&apos;s categories</p>
+            </div>
+            <button
+              onClick={() => setShowDailyCount(true)}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+            >
+              <ClipboardList className="w-4 h-4" />
+              Submit Counts
+            </button>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-800">
@@ -248,6 +266,18 @@ export default function TrackerPage() {
           recordedStartISO={activeTask.startTime}
           onConfirm={handleConfirm}
           onCancel={() => setShowModal(false)}
+        />
+      )}
+
+      {showDailyCount && personName && (
+        <DailyCountModal
+          personName={personName}
+          date={today}
+          entries={todayEntries}
+          onClose={() => setShowDailyCount(false)}
+          onCountsSubmitted={(newEntries) =>
+            setTodayEntries((prev) => [...newEntries, ...prev])
+          }
         />
       )}
     </>

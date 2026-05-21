@@ -9,7 +9,6 @@ export interface StopData {
   startTime: string;   // HH:mm:ss
   endTime: string;     // HH:mm:ss
   durationSeconds: number;
-  taskCount?: number;
   entryType: "auto" | "corrected";
 }
 
@@ -26,9 +25,9 @@ function toHHmmss(iso: string) {
 
 function calcSeconds(start: string, end: string): number {
   if (!start || !end) return 0;
-  const parts = (v: string) => v.split(":").map(Number);
-  const [sh, sm, ss = 0] = parts(start);
-  const [eh, em, es = 0] = parts(end);
+  const p = (v: string) => v.split(":").map(Number);
+  const [sh, sm, ss = 0] = p(start);
+  const [eh, em, es = 0] = p(end);
   return Math.max(0, eh * 3600 + em * 60 + es - (sh * 3600 + sm * 60 + ss));
 }
 
@@ -38,20 +37,9 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
 
   const [startTime, setStartTime] = useState(originalStart);
   const [endTime, setEndTime] = useState(originalEnd);
-  const [count, setCount] = useState("");
 
   const durationSeconds = calcSeconds(startTime, endTime);
   const isModified = startTime !== originalStart || endTime !== originalEnd;
-
-  function handleSave() {
-    onConfirm({
-      startTime: startTime,
-      endTime: endTime,
-      durationSeconds,
-      taskCount: count ? Number(count) : undefined,
-      entryType: isModified ? "corrected" : "auto",
-    });
-  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -68,26 +56,22 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">
-              Start Time
-            </label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Start Time</label>
             <input
               type="time"
+              step="1"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              step="1"
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">
-              End Time
-            </label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">End Time</label>
             <input
               type="time"
+              step="1"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              step="1"
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
@@ -110,24 +94,6 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
           </div>
         )}
 
-        {task.requiresProgressCount && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              How many did you process / complete?
-              <span className="text-red-500 ml-1">*</span>
-            </label>
-            <input
-              type="number"
-              min={0}
-              value={count}
-              onChange={(e) => setCount(e.target.value)}
-              placeholder="Required — e.g. 12"
-              step="1"
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-        )}
-
         <div className="flex gap-3">
           <button
             onClick={onCancel}
@@ -136,8 +102,8 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
             Cancel
           </button>
           <button
-            onClick={handleSave}
-            disabled={durationSeconds <= 0 || (task.requiresProgressCount && count === "")}
+            onClick={() => onConfirm({ startTime, endTime, durationSeconds, entryType: isModified ? "corrected" : "auto" })}
+            disabled={durationSeconds <= 0}
             className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold text-sm flex items-center justify-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
