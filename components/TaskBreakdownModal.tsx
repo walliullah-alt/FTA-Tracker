@@ -141,6 +141,7 @@ export default function TaskBreakdownModal({
                     <th className="pb-2 font-medium">End</th>
                     <th className="pb-2 font-medium text-right">Duration</th>
                     <th className="pb-2 font-medium text-right">Count</th>
+                    <th className="pb-2 font-medium text-right">Remark</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -163,6 +164,18 @@ export default function TaskBreakdownModal({
                       <td className="py-2.5 text-right text-slate-500">
                         {e.taskCount != null && e.taskCount > 0 ? e.taskCount : "—"}
                       </td>
+                      <td className="py-2.5 text-right">
+                        {e.entryType === "manual" && (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                            Manual
+                          </span>
+                        )}
+                        {e.entryType === "corrected" && (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
+                            Corrected
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -180,6 +193,7 @@ export default function TaskBreakdownModal({
                     <td className="pt-3 text-right font-bold text-slate-600">
                       {sessionCount > 0 ? sessionCount : "—"}
                     </td>
+                    <td />
                   </tr>
                 </tfoot>
               </table>
