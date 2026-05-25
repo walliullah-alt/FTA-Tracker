@@ -245,6 +245,7 @@ export default function DashboardView() {
       {popupSummary && (
         <TaskBreakdownModal
           summary={popupSummary}
+          entries={entries}
           isRange={isRange}
           dateFrom={dateFrom}
           dateTo={dateTo}
