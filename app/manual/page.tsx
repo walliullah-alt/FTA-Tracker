@@ -33,6 +33,7 @@ export default function ManualEntryPage() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [count, setCount] = useState("");
+  const [remarks, setRemarks] = useState("");
 
   const selectedTask = tasks.find((t) => t.name === taskName);
   const durationSeconds = useMemo(() => calcSeconds(startTime, endTime), [startTime, endTime]);
@@ -67,6 +68,7 @@ export default function ManualEntryPage() {
       durationSeconds,
       taskCount: count ? Number(count) : null,
       entryType: "manual" as const,
+      remarks: remarks || undefined,
     };
 
     try {
@@ -76,6 +78,7 @@ export default function ManualEntryPage() {
       setStartTime("");
       setEndTime("");
       setCount("");
+      setRemarks("");
       setTimeout(() => setSuccess(false), 4000);
     } catch {
       setError("Failed to save entry. Please try again.");
@@ -227,6 +230,19 @@ export default function ManualEntryPage() {
                 />
               </div>
             )}
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Remarks <span className="font-normal text-slate-400">(optional)</span>
+              </label>
+              <textarea
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Add any notes about this entry…"
+                rows={3}
+                className="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
 
             <button
               type="submit"

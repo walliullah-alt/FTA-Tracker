@@ -63,6 +63,7 @@ export default function DailyCountModal({
 }: Props) {
   const [rows, setRows] = useState<TaskRow[]>(() => buildRows(entries));
   const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [remarks, setRemarks] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -86,6 +87,7 @@ export default function DailyCountModal({
       durationSeconds: 0,
       taskCount: Number(inputs[r.taskName]) - r.currentCount,
       entryType: "count_update" as const,
+      remarks: remarks[r.taskName] || undefined,
     }));
 
     try {
@@ -101,6 +103,11 @@ export default function DailyCountModal({
         })
       );
       setInputs((prev) => {
+        const next = { ...prev };
+        toSave.forEach((r) => delete next[r.taskName]);
+        return next;
+      });
+      setRemarks((prev) => {
         const next = { ...prev };
         toSave.forEach((r) => delete next[r.taskName]);
         return next;
@@ -163,6 +170,7 @@ export default function DailyCountModal({
                   <th className="pb-2 font-medium">Category</th>
                   <th className="pb-2 font-medium text-right">Time Today</th>
                   <th className="pb-2 font-medium text-right">Count</th>
+                  <th className="pb-2 font-medium text-right">Remarks</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,7 +197,22 @@ export default function DailyCountModal({
                           onChange={(e) =>
                             setInputs((prev) => ({ ...prev, [r.taskName]: e.target.value }))
                           }
-                          className="w-28 text-right border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          className="w-24 text-right border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+                      )}
+                    </td>
+                    <td className="py-3 text-right">
+                      {r.isLocked ? (
+                        <span className="text-xs text-slate-400">—</span>
+                      ) : (
+                        <input
+                          type="text"
+                          value={remarks[r.taskName] ?? ""}
+                          placeholder="Optional note"
+                          onChange={(e) =>
+                            setRemarks((prev) => ({ ...prev, [r.taskName]: e.target.value }))
+                          }
+                          className="w-36 text-right border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                         />
                       )}
                     </td>

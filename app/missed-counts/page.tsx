@@ -69,6 +69,8 @@ export default function MissedCountsPage() {
 
   // per-cell input: key = `date||taskName`
   const [inputs, setInputs] = useState<Record<string, string>>({});
+  // per-cell remarks: same key format
+  const [remarksMap, setRemarksMap] = useState<Record<string, string>>({});
   // submitted keys
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
   // which dates are currently saving
@@ -133,18 +135,20 @@ export default function MissedCountsPage() {
 
     try {
       await Promise.all(
-        toSave.map((r) =>
-          logEntry({
+        toSave.map((r) => {
+          const key = cellKey(date, r.taskName);
+          return logEntry({
             date,
             personName: personName!,
             taskName: r.taskName,
             startTime: "",
             endTime: "",
             durationSeconds: 0,
-            taskCount: Number(inputs[cellKey(date, r.taskName)]),
+            taskCount: Number(inputs[key]),
             entryType: "count_update",
-          })
-        )
+            remarks: remarksMap[key] || undefined,
+          });
+        })
       );
       setSubmitted((prev) => {
         const next = new Set(prev);
@@ -238,6 +242,7 @@ export default function MissedCountsPage() {
                         <th className="px-5 py-2 font-medium">Category</th>
                         <th className="px-5 py-2 font-medium text-right">Time Worked</th>
                         <th className="px-5 py-2 font-medium text-right">Count</th>
+                        <th className="px-5 py-2 font-medium text-right">Remarks</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -267,7 +272,24 @@ export default function MissedCountsPage() {
                                   onChange={(e) =>
                                     setInputs((prev) => ({ ...prev, [key]: e.target.value }))
                                   }
-                                  className="w-28 text-right border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                  className="w-24 text-right border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                />
+                              )}
+                            </td>
+                            <td className="px-5 py-3 text-right">
+                              {isSubmitted ? (
+                                <span className="text-xs text-slate-400">
+                                  {remarksMap[key] || "—"}
+                                </span>
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={remarksMap[key] ?? ""}
+                                  placeholder="Optional note"
+                                  onChange={(e) =>
+                                    setRemarksMap((prev) => ({ ...prev, [key]: e.target.value }))
+                                  }
+                                  className="w-36 text-right border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                                 />
                               )}
                             </td>

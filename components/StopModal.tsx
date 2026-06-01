@@ -10,6 +10,7 @@ export interface StopData {
   endTime: string;     // HH:mm:ss
   durationSeconds: number;
   entryType: "auto" | "corrected";
+  remarks: string;
 }
 
 interface Props {
@@ -37,6 +38,7 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
 
   const [startTime, setStartTime] = useState(originalStart);
   const [endTime, setEndTime] = useState(originalEnd);
+  const [remarks, setRemarks] = useState("");
 
   const durationSeconds = calcSeconds(startTime, endTime);
   const isModified = startTime !== originalStart || endTime !== originalEnd;
@@ -94,6 +96,19 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
           </div>
         )}
 
+        <div className="mb-4">
+          <label className="block text-xs font-medium text-slate-500 mb-1">
+            Remarks <span className="font-normal text-slate-400">(optional)</span>
+          </label>
+          <textarea
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            placeholder="Add a note about this session…"
+            rows={2}
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+
         <div className="flex gap-3">
           <button
             onClick={onCancel}
@@ -102,7 +117,7 @@ export default function StopModal({ task, recordedStartISO, onConfirm, onCancel 
             Cancel
           </button>
           <button
-            onClick={() => onConfirm({ startTime, endTime, durationSeconds, entryType: isModified ? "corrected" : "auto" })}
+            onClick={() => onConfirm({ startTime, endTime, durationSeconds, entryType: isModified ? "corrected" : "auto", remarks })}
             disabled={durationSeconds <= 0}
             className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold text-sm flex items-center justify-center gap-2"
           >

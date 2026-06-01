@@ -16,6 +16,7 @@ export interface TimeEntry {
   durationSeconds: number;  // col F (stored as integer seconds for accuracy)
   taskCount: number | null; // col G (null when not applicable)
   entryType: "auto" | "manual" | "corrected" | "count_update"; // col H
+  remarks?: string; // col I
 }
 
 export interface ActiveTask {

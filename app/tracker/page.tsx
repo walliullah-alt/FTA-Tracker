@@ -124,6 +124,7 @@ export default function TrackerPage() {
       durationSeconds: data.durationSeconds,
       taskCount: null,
       entryType: data.entryType,
+      remarks: data.remarks || undefined,
     };
 
     setShowModal(false);

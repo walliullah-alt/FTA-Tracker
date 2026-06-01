@@ -164,17 +164,24 @@ export default function TaskBreakdownModal({
                       <td className="py-2.5 text-right text-slate-500">
                         {e.taskCount != null && e.taskCount > 0 ? e.taskCount : "—"}
                       </td>
-                      <td className="py-2.5 text-right">
-                        {e.entryType === "manual" && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                            Manual
-                          </span>
-                        )}
-                        {e.entryType === "corrected" && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
-                            Corrected
-                          </span>
-                        )}
+                      <td className="py-2.5 text-right max-w-[160px]">
+                        <div className="flex flex-col items-end gap-1">
+                          {e.entryType === "manual" && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                              Manual
+                            </span>
+                          )}
+                          {e.entryType === "corrected" && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
+                              Corrected
+                            </span>
+                          )}
+                          {e.remarks && (
+                            <span className="text-[11px] text-slate-500 text-right leading-tight">
+                              {e.remarks}
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
