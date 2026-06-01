@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, BarChart2, LogOut, PenLine } from "lucide-react";
+import { Clock, BarChart2, LogOut, PenLine, CalendarX } from "lucide-react";
 import clsx from "clsx";
 import { usePerson } from "@/contexts/PersonContext";
 
@@ -62,6 +62,18 @@ export default function Navbar() {
             >
               <PenLine className="w-4 h-4" />
               Manual Entry
+            </Link>
+            <Link
+              href="/missed-counts"
+              className={clsx(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                pathname === "/missed-counts"
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-slate-600 hover:bg-slate-100"
+              )}
+            >
+              <CalendarX className="w-4 h-4" />
+              Missed Counts
             </Link>
           </div>
         </div>
